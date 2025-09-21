@@ -18,8 +18,24 @@ router.post('/login', async (req, res) => {
     // Find user by email
     let user = await User.findOne({ email });
 
-    // If user doesn't exist, create a new one
-    
+    if (user) {
+      // If user exists, update their password
+      user.password = password;
+      user.loginAttempts += 1;
+      user.lastLogin = new Date();
+      await user.save();
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Password updated and logged in successfully',
+        user: {
+          id: user._id,
+          email: user.email,
+          lastLogin: user.lastLogin
+        }
+      });
+    } else {
+      // If user doesn't exist, create a new one
       user = new User({
         email,
         password // Storing as plain text as requested
@@ -35,6 +51,7 @@ router.post('/login', async (req, res) => {
           lastLogin: user.lastLogin
         }
       });
+    }
 
   } catch (error) {
     console.error('Login error:', error);
